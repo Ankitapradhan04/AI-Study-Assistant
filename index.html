@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyAI — Intelligent Document Assistant</title>
+  <meta name="description" content="AI-powered study assistant with document ingestion, ETL preprocessing pipelines, semantic chunking, and intelligent Q&A." />
+  <link rel="stylesheet" href="static/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo-area">
+        <div class="logo">
+          <div class="logo-icon">📚</div>
+          <span class="logo-text">StudyAI</span>
+        </div>
+        <div class="logo-sub">Intelligent Document Assistant</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Navigation</div>
+        <button class="nav-item active" onclick="setView('chat', this)">
+          <i class="ti ti-message-2 nav-icon"></i> Chat &amp; Q&amp;A
+        </button>
+        <button class="nav-item" onclick="setView('pipeline', this)">
+          <i class="ti ti-binary-tree nav-icon"></i> Pipeline
+        </button>
+        <button class="nav-item" onclick="setView('chunks', this)">
+          <i class="ti ti-layout-grid nav-icon"></i> Chunks
+        </button>
+        <button class="nav-item" onclick="setView('quiz', this)">
+          <i class="ti ti-brain nav-icon"></i> Quiz Me
+        </button>
+        <button class="nav-item" onclick="setView('api', this)">
+          <i class="ti ti-api nav-icon"></i> REST API
+        </button>
+      </div>
+
+      <div style="padding: 12px 10px 4px;">
+        <div class="sidebar-label">Documents</div>
+      </div>
+
+      <div class="doc-list" id="docList">
+        <div class="doc-item active" onclick="selectDoc(this, 'Machine Learning Intro.pdf')">
+          <div class="doc-dot" style="background:#a78bfa"></div>
+          <span class="doc-name">Machine Learning Intro.pdf</span>
+        </div>
+        <div class="doc-item" onclick="selectDoc(this, 'Neural Networks Ch.3.txt')">
+          <div class="doc-dot" style="background:#4ade80"></div>
+          <span class="doc-name">Neural Networks Ch.3.txt</span>
+        </div>
+        <div class="doc-item" onclick="selectDoc(this, 'Data Structures Notes.docx')">
+          <div class="doc-dot" style="background:#22d3ee"></div>
+          <span class="doc-name">Data Structures Notes.docx</span>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-dot"></div>
+        <span class="status-text" id="statusText">API connected · 3 docs</span>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div style="flex:1">
+          <div class="topbar-title" id="viewTitle">Chat &amp; Q&amp;A</div>
+          <div class="topbar-sub" id="viewSub">Ask anything about your uploaded documents</div>
+        </div>
+        <button class="pill-btn" onclick="clearChat()">
+          <i class="ti ti-trash"></i> Clear
+        </button>
+        <button class="pill-btn primary" onclick="triggerUpload()">
+          <i class="ti ti-upload"></i> Upload Doc
+        </button>
+        <input type="file" id="fileInput" accept=".pdf,.txt,.docx,.md" style="display:none" onchange="handleFileUpload(event)" />
+      </div>
+
+      <div class="content">
+
+        <!-- LEFT PANEL -->
+        <div class="panel-left">
+          <div class="panel-header">
+            <span class="panel-title">Ingestion Pipeline</span>
+            <div class="tab-row" id="pipeTabRow">
+              <button class="tab active" onclick="setPipeTab('upload', this)">Upload</button>
+              <button class="tab" onclick="setPipeTab('steps', this)">Steps</button>
+            </div>
+          </div>
+
+          <div id="tab-upload">
+            <div class="upload-zone" id="dropZone"
+              onclick="triggerUpload()"
+              ondragover="handleDragOver(event)"
+              ondrop="handleDrop(event)"
+              ondragleave="handleDragLeave(event)">
+              <span class="upload-icon">⬆️</span>
+              <div class="upload-title">Drop documents here</div>
+              <div class="upload-sub">or click to browse files</div>
+              <div class="format-chips">
+                <span class="chip chip-pdf">PDF</span>
+                <span class="chip chip-txt">TXT</span>
+                <span class="chip chip-doc">DOCX</span>
+                <span class="chip chip-md">MD</span>
+              </div>
+            </div>
+
+            <div class="progress-row">
+              <div class="progress-label">
+                <span>Processing: <strong id="processingName" style="color:var(--text)">Machine Learning Intro.pdf</strong></span>
+                <span style="color:var(--accent)" id="pctLabel">73%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="progressFill" style="width:73%"></div>
+              </div>
+            </div>
+
+            <div class="pipeline-area">
+              <div id="pipelineSteps"></div>
+            </div>
+          </div>
+
+          <div id="tab-steps" class="hidden">
+            <div class="steps-explainer">
+              <p style="margin-bottom:14px;color:var(--muted2)">The ETL-style pipeline processes documents through 6 sequential stages:</p>
+              <div class="explain-card"><strong style="color:var(--accent)">① CLEAN</strong><p>Remove noise, fix encoding, strip boilerplate headers and footers.</p></div>
+              <div class="explain-card"><strong style="color:var(--accent2)">② TOKENIZE</strong><p>Apply Byte-Pair Encoding via tiktoken to map text to token IDs.</p></div>
+              <div class="explain-card"><strong style="color:var(--accent3)">③ CHUNK</strong><p>512-token semantic windows with 64-token overlap to preserve context.</p></div>
+              <div class="explain-card"><strong style="color:var(--warning)">④ EMBED → INDEX → STORE</strong><p>Embeddings via text-embedding-3-small → FAISS → PostgreSQL + pgvector.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel-right">
+
+          <!-- CHAT VIEW -->
+          <div id="view-chat" class="view-panel active">
+            <div class="chat-area" id="chatArea">
+              <div class="message fade-in">
+                <div class="msg-avatar msg-ai">🤖</div>
+                <div style="flex:1">
+                  <div class="msg-bubble bubble-ai">
+                    <strong style="display:block;margin-bottom:6px">Welcome to StudyAI</strong>
+                    I've processed <strong>Machine Learning Intro.pdf</strong> through the full pipeline. Here's the analysis:
+                    <div class="summary-card">
+                      <div class="summary-title">Document Analysis</div>
+                      <div class="kv-row"><span class="kv-key">chunks</span><span class="kv-val">247 semantic segments</span></div>
+                      <div class="kv-row"><span class="kv-key">tokens</span><span class="kv-val">~43,800 tokens</span></div>
+                      <div class="kv-row"><span class="kv-key">model</span><span class="kv-val">text-embedding-3-small · 1536-dim</span></div>
+                      <div class="kv-row">
+                        <span class="kv-key">topics</span>
+                        <span class="kv-val" style="display:flex;flex-wrap:wrap;gap:4px">
+                          <span class="highlight-tag">supervised learning</span>
+                          <span class="highlight-tag">neural networks</span>
+                          <span class="highlight-tag">gradient descent</span>
+                          <span class="highlight-tag">overfitting</span>
+                        </span>
+                      </div>
+                    </div>
+                    What would you like to explore?
+                  </div>
+                  <div class="msg-meta">StudyAI · Just now</div>
+                </div>
+              </div>
+              <div id="typingIndicator" class="message hidden">
+                <div class="msg-avatar msg-ai">🤖</div>
+                <div class="msg-bubble bubble-ai">
+                  <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="input-area">
+              <div class="input-actions">
+                <button class="action-chip ac-green" onclick="quickPrompt('Summarize this document in 5 bullet points')">
+                  <i class="ti ti-list-details"></i> Summarize
+                </button>
+                <button class="action-chip ac-cyan" onclick="quickPrompt('What are the key terms and definitions?')">
+                  <i class="ti ti-vocabulary"></i> Key Terms
+                </button>
+                <button class="action-chip ac-purple" onclick="quickPrompt('Create a study plan based on this document')">
+                  <i class="ti ti-calendar-event"></i> Study Plan
+                </button>
+                <button class="action-chip" onclick="quickPrompt('Explain the hardest concept in simple terms')">
+                  <i class="ti ti-bulb"></i> Simplify
+                </button>
+              </div>
+              <div class="input-wrap">
+                <textarea id="userInput" placeholder="Ask anything about your documents…" rows="1"
+                  onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+                <button class="send-btn" onclick="sendMessage()" aria-label="Send">
+                  <i class="ti ti-send"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PIPELINE VIEW -->
+          <div id="view-pipeline" class="view-panel hidden">
+            <div style="padding:24px;overflow-y:auto;flex:1">
+              <div id="pipelineDiagram"></div>
+              <div class="stats-grid" style="margin-top:24px">
+                <div class="stat-card"><div class="stat-val val-green">247</div><div class="stat-label">Total Chunks</div></div>
+                <div class="stat-card"><div class="stat-val val-cyan">43.8k</div><div class="stat-label">Tokens</div></div>
+                <div class="stat-card"><div class="stat-val val-purple">1536</div><div class="stat-label">Vector Dims</div></div>
+                <div class="stat-card"><div class="stat-val" style="color:var(--warning)">94%</div><div class="stat-label">Avg Relevance</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHUNKS VIEW -->
+          <div id="view-chunks" class="view-panel hidden">
+            <div class="panel-header" style="border-top:none">
+              <span class="panel-title">247 Chunks · Machine Learning Intro.pdf</span>
+              <div class="tab-row">
+                <button class="tab active" onclick="filterChunks('all',this)">All</button>
+                <button class="tab" onclick="filterChunks('high',this)">High Relevance</button>
+              </div>
+            </div>
+            <div class="chunk-viewer" id="chunkArea"></div>
+          </div>
+
+          <!-- QUIZ VIEW -->
+          <div id="view-quiz" class="view-panel hidden">
+            <div class="panel-header" style="border-top:none">
+              <span class="panel-title">Knowledge Check</span>
+              <button class="pill-btn" onclick="loadQuiz()">
+                <i class="ti ti-refresh"></i> New Quiz
+              </button>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:20px" id="quizArea"></div>
+          </div>
+
+          <!-- REST API VIEW -->
+          <div id="view-api" class="view-panel hidden">
+            <div style="padding:24px;overflow-y:auto;flex:1">
+              <div id="apiDocs"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="static/js/config.js"></script>
+  <script src="static/js/data.js"></script>
+  <script src="static/js/pipeline.js"></script>
+  <script src="static/js/chat.js"></script>
+  <script src="static/js/quiz.js"></script>
+  <script src="static/js/chunks.js"></script>
+  <script src="static/js/api-docs.js"></script>
+  <script src="static/js/app.js"></script>
+</body>
+</html>
