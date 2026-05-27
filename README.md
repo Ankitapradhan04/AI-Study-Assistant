@@ -79,51 +79,6 @@ Or with VS Code: install the **Live Server** extension and click **Go Live**.
 
 ---
 
-## 🔑 Setting Your Anthropic API Key
-
-The app works in **demo mode** without an API key. To use real Claude responses:
-
-### Method A — Edit `config.js` (local only, never commit)
-
-```js
-// static/js/config.js
-const CONFIG = {
-  ANTHROPIC_API_KEY: 'sk-ant-api03-YOUR_KEY_HERE',
-  ...
-};
-```
-
-### Method B — URL parameter (quick testing)
-
-```
-http://localhost:3000?key=sk-ant-api03-YOUR_KEY_HERE
-```
-
-### Method C — Browser localStorage (persistent)
-
-Open the browser console (F12) and run:
-
-```js
-localStorage.setItem('ANTHROPIC_KEY', 'sk-ant-api03-YOUR_KEY_HERE')
-```
-
-Then refresh the page.
-
-> ⚠️ **Never commit your real API key to GitHub.** Method A is fine for local dev only.  
-> The `.gitignore` excludes `config.local.js` — you can keep a local override there.
-
----
-
-## 🔗 Django REST Framework Backend (Optional)
-
-The frontend is designed to connect to a Django REST Framework backend. The REST API view documents all endpoints. Here's the expected backend setup:
-
-### Install
-
-```bash
-pip install django djangorestframework django-cors-headers psycopg2-binary
-```
-
 ### Expected Endpoints
 
 | Method | URL | Description |
@@ -164,43 +119,6 @@ REST_FRAMEWORK = {
 
 ---
 
-## 🌐 Deploy to GitHub Pages
-
-GitHub Pages hosts static sites for free — perfect for this project.
-
-### Step 1 — Create GitHub repo
-
-```bash
-git init
-git add .
-git commit -m "feat: initial StudyAI commit"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/ai-study-assistant.git
-git push -u origin main
-```
-
-### Step 2 — Enable GitHub Pages
-
-1. Go to your repo on GitHub
-2. Click **Settings** → **Pages** (left sidebar)
-3. Under **Source**, select `main` branch, `/ (root)` folder
-4. Click **Save**
-5. Your app will be live at: `https://YOUR_USERNAME.github.io/ai-study-assistant/`
-
-> **Note:** The API key is never needed for the demo — GitHub Pages visitors get full demo functionality. Users who want real AI responses can add their key via the URL param or localStorage (in their own browser session — it's never sent to GitHub).
-
-### Step 3 — Custom domain (optional)
-
-Create a `CNAME` file in the repo root:
-
-```
-studyai.yourdomain.com
-```
-
-Then configure your DNS with a CNAME record pointing to `YOUR_USERNAME.github.io`.
-
----
-
 ## 🛡 Security Notes
 
 - API keys are resolved at runtime — never stored in source code
@@ -217,14 +135,7 @@ Then configure your DNS with a CNAME record pointing to `YOUR_USERNAME.github.io
 | Frontend | Vanilla HTML5 · CSS3 · ES6+ JavaScript |
 | Fonts | DM Serif Display · Instrument Sans · DM Mono (Google Fonts) |
 | Icons | Tabler Icons (webfont) |
-| AI API | Anthropic Claude (claude-sonnet-4-20250514) |
 | Backend (optional) | Django · Django REST Framework · PostgreSQL + pgvector · FAISS |
-
----
-
-## 📄 License
-
-MIT — feel free to use, fork, and extend.
 
 ---
 
